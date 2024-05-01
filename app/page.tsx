@@ -80,31 +80,26 @@ export default function Home() {
     })
 
     const reader = llmResponse.body.getReader();
-  let chunks = '';
-  let prevChunk = '';
+    let chunks = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      
+      const decodedArr = new TextDecoder("utf-8").decode(value);
+      const cleanedArr1 = decodedArr.match(/"([\s\S]*?)"/g)
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
+      for (var cleaned of cleanedArr1) {
+        chunks += cleaned.slice(1, -1).replace(/\\n/g, '\n');
+        console.log(cleaned.slice(1, -1).replace(/\\n/g, '\n'));
+      }
+
+
+
+
+      setAnswer(chunks);
     }
-
-    const decodedChunk = new TextDecoder("utf-8").decode(value);
-    const cleanedChunk = decodedChunk
-      .replace(/\d+:"/g, '')
-      .replace(/"/g, '');
-
-    if (prevChunk.endsWith(' ') || cleanedChunk.startsWith(' ')) {
-      chunks += cleanedChunk;
-    } else {
-      chunks += ' ' + cleanedChunk;
-    }
-
-    prevChunk = cleanedChunk;
-  }
-
-  // Remove leading/trailing whitespace and replace multiple spaces with a single space
-  chunks = chunks.trim().replace(/\s+/g, ' ');
 
 
 

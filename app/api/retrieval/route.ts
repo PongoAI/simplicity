@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     const dataForPongo = []
 
-    console.log(searchResults)
+    // console.log(searchResults)
     var i = 0
     while (i < searchResults.results.length) {
         var curResult = searchResults.results[i]
