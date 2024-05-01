@@ -80,15 +80,31 @@ export default function Home() {
     })
 
     const reader = llmResponse.body.getReader();
-    let chunks = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      chunks += new TextDecoder("utf-8").decode(value).toString();
-      setAnswer(chunks);
+  let chunks = '';
+  let prevChunk = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
     }
+
+    const decodedChunk = new TextDecoder("utf-8").decode(value);
+    const cleanedChunk = decodedChunk
+      .replace(/\d+:"/g, '')
+      .replace(/"/g, '');
+
+    if (prevChunk.endsWith(' ') || cleanedChunk.startsWith(' ')) {
+      chunks += cleanedChunk;
+    } else {
+      chunks += ' ' + cleanedChunk;
+    }
+
+    prevChunk = cleanedChunk;
+  }
+
+  // Remove leading/trailing whitespace and replace multiple spaces with a single space
+  chunks = chunks.trim().replace(/\s+/g, ' ');
 
 
 

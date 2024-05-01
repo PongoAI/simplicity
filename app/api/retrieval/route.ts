@@ -22,11 +22,13 @@ export async function POST(req: NextRequest) {
 
     const dataForPongo = []
 
-
+    console.log(searchResults)
     var i = 0
     while (i < searchResults.results.length) {
         var curResult = searchResults.results[i]
-        var curMetadata = {'title': curResult.title}
+
+        if (!curResult) break
+        var curMetadata = curResult.title ? {'title': curResult.title} : {'title': 'no title'}
         var k = 0
 
         dataForPongo.push({'text': curResult.text, 'metadata': curMetadata, id: curResult.id, url: curResult.url})
