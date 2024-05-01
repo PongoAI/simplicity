@@ -15,7 +15,7 @@ import remarkGfm from 'remark-gfm'
 
 function formatStrings(strings: any) {
   return strings
-    .map(str => {
+    .map((str: string) => {
       // Extract the substring inside the quotes (if applicable)
       const match = str.match(/"(.*?)"/);
       return match ? match[1] : '';
@@ -98,23 +98,30 @@ export default function Home() {
       },
       body: JSON.stringify({llmPrompt: retrievalResults['llmPrompt']})
     })
+    if(llmResponse.body) {
+      const reader = llmResponse.body.getReader();
+      let chunks = '';
+      while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+          
+          const decodedArr = new TextDecoder("utf-8").decode(value);
+          const cleanedArr1 = decodedArr.match(/"([\s\S]*?)"/g)
+          console.log(cleanedArr1)
+          chunks += formatStrings(cleanedArr1)
+          setAnswer(chunks)
 
-    const reader = llmResponse.body.getReader();
-    let chunks = '';
 
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
       }
-      
-      const decodedArr = new TextDecoder("utf-8").decode(value);
-      const cleanedArr1 = decodedArr.match(/"([\s\S]*?)"/g)
-      console.log(cleanedArr1)
-      chunks += formatStrings(cleanedArr1)
-      setAnswer(chunks)
+    } else {
+      alert('Failed to search, please try again')
+      return
+    }
 
+
+    
 
 
 
@@ -126,7 +133,7 @@ export default function Home() {
     }
     
 
-  }
+  
 
   return (
     <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
