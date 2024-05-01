@@ -6,8 +6,9 @@ import SearchBar from "./components/searchBar";
 import Sources from "./components/sources";
 import {NumberedListLeft} from 'iconoir-react'
 import { Heptagon } from "./components/heptagon";
-import io from 'socket.io-client';
-import { socket } from "./socket";
+import { useCompletion } from 'ai/react';
+
+import axios from 'axios'
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -17,14 +18,12 @@ function addCitationLinks(markdownString: string, sources: any) {
   const citationRegex = /\[(\d)\]/g;
 
   // Replace each match with a hyperlinked citation
-  console.log(markdownString)
+
   const modifiedMarkdown = markdownString.replace(citationRegex, (match, index) => {
     const sourceIndex = parseInt(index) - 1;
-    console.log(sourceIndex)
     if (sourceIndex >= 0 && sourceIndex < sources.length) {
       const source = sources[sourceIndex];
       if (source && source.url) {
-        console.log('replaced')
         return `[${match}](${source.url})`;
       }
     }
@@ -42,43 +41,11 @@ export default function Home() {
   const [isConnected, setIsConnected] = React.useState(false);
   const [transport, setTransport] = React.useState("N/A");
   const [answer, setAnswer] = React.useState('')
+  const { completion, input,  handleInputChange, handleSubmit} =
+    useCompletion();
 
 
-  React.useEffect(() => {
-    if (socket.connected) {
-      onConnect();
-    }
 
-    function onConnect() {
-      setIsConnected(true);
-      setTransport(socket.io.engine.transport.name);
-
-      socket.io.engine.on("upgrade", (transport) => {
-        setTransport(transport.name);
-      });
-    }
-
-    function onDisconnect() {
-      setIsConnected(false);
-      setTransport("N/A");
-    }
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on('init', (val: string) => {console.log(val)})
-    socket.on('results', (val: string) => {
-      const resJSON = JSON.parse(val)
-      setSources(resJSON)
-    })
-    socket.on('answer', (val: string) => {
-      setAnswer(val)
-    })
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-    };
-  }, []);
 
   const handleSearch = async (e: any, queryString: string) => {
     e.preventDefault()
@@ -90,7 +57,42 @@ export default function Home() {
       setPageTitle(queryString)
       setPageState('results')
       setAnswer('')
-      socket.emit('search', JSON.stringify({'query': queryString}))
+    const retrievalResponse = await fetch(`/api/retrieval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({query: queryString})
+    });
+    const retrievalResults = await retrievalResponse.json();
+
+
+
+    setSources(retrievalResults['sources'])
+    console.log(retrievalResults['llmPrompt'])
+    console.log("ASKING THE LLM")
+    const llmResponse = await fetch(`/api/llm-inference`, {
+      method: 'POST', 
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({llmPrompt: retrievalResults['llmPrompt']})
+    })
+
+    const reader = llmResponse.body.getReader();
+    let chunks = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      chunks += new TextDecoder("utf-8").decode(value).toString();
+      setAnswer(chunks);
+    }
+
+
+
+
     }
     
 
@@ -100,7 +102,7 @@ export default function Home() {
     <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
       <div className="flex mt-3"><div className="static  mt-auto mb-3 text-sm "><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
 
-<div className="static ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo</a></div></div>
+<div className="static ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo 🦧</a></div></div>
         
 
       {pageState == 'landing' ? 

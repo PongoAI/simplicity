@@ -79,7 +79,6 @@ app.prepare().then(() => {
                 break
             }
 
-
             sourcesString += `Source #${i+1} (from "${curSource['metadata']['title']}"): ${curSource['text']}\n\n`
 
             i++

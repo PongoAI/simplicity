@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node server.ts",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",
+    "ai": "^3.1.0",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
     "exa-js": "^1.0.12",
