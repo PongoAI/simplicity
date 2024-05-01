@@ -1,3 +1,5 @@
+
+
 const { createServer } = require('http')
 const { parse } = require('url')
 const { Server } = require("socket.io");
@@ -34,17 +36,15 @@ app.prepare().then(() => {
   
     const io = new Server(httpServer);
   
-    io.on("connection", (socket) => {
-        console.log('emitted')
+    io.on("connection", (socket: any)=> {
         socket.emit('init', 'hello world')
-        socket.on('search', async (value) => {
+        socket.on('search', async (value: string) => {
         const data = JSON.parse(value);
         const searchResults = await exa.searchAndContents(data['query'], {
             useAutoprompt: true,
             numResults: 20,
             text: {  maxCharacters: 2000 },
             highlights: { highlightsPerUrl: 10, numSentences: 10, query: "This is the highlight query:" }})
-        console.log(searchResults)
         
         const dataForPongo = []
 
@@ -118,7 +118,7 @@ app.prepare().then(() => {
     });
   
     httpServer
-      .once("error", (err) => {
+      .once("error", (err: Error) => {
         console.error(err);
         process.exit(1);
       })

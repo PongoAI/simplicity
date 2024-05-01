@@ -98,19 +98,23 @@ export default function Home() {
 
   return (
     <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
+                <div className="static ml-auto mt-3">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo</a></div>
 
       {pageState == 'landing' ? 
-      <div>
-        <div className="mx-auto text-3xl mt-10 w-fit">Need answers? Ask a question</div>
+      <div className="flex flex-col h-screen">
+
+        <div className="mx-auto text-3xl mt-32 md:mt-20 w-fit">Need answers? Ask a question</div>
 
         <div className="w-full mt-10">
           <SearchBar isPill={false} handleSearch={handleSearch}/>
         </div> 
+        <div className="static  mt-auto mb-3"><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
       </div>
       
       :
 
       <div className="max-w-[50rem] w-full mx-auto">
+
         <div className="mx-auto text-3xl mt-10">{pageTitle}</div>
 
         <div className="flex mt-8 text-lg">
@@ -163,6 +167,7 @@ export default function Home() {
         </div>
         
         }
+
 
 
     </div>
