@@ -14,7 +14,7 @@ const dev = process.env.NODE_ENV !== 'production'
 const PONGO_SECRET = process.env.PONGO_SECRET
 const EXA_SECRET = process.env.EXA_SECRET
 const TOGETHERAI_SECRET = process.env.TOGETHERAI_SECRET
-const hostname = 'localhost'
+const hostname = process.env.HOSTNAME || 'localhost'
 const port = process.env.PORT || 3000
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port })
