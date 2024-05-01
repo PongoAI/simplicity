@@ -1,113 +1,170 @@
+'use client'
+
 import Image from "next/image";
+import React from 'react';
+import SearchBar from "./components/searchBar";
+import Sources from "./components/sources";
+import {NumberedListLeft} from 'iconoir-react'
+import { Heptagon } from "./components/heptagon";
+import io from 'socket.io-client';
+import { socket } from "./socket";
+
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+
+function addCitationLinks(markdownString: string, sources: any) {
+  // Regular expression to match citation pattern [i] where i is a number 1-8
+  const citationRegex = /\[(\d)\]/g;
+
+  // Replace each match with a hyperlinked citation
+  console.log(markdownString)
+  const modifiedMarkdown = markdownString.replace(citationRegex, (match, index) => {
+    const sourceIndex = parseInt(index) - 1;
+    console.log(sourceIndex)
+    if (sourceIndex >= 0 && sourceIndex < sources.length) {
+      const source = sources[sourceIndex];
+      if (source && source.url) {
+        console.log('replaced')
+        return `[${match}](${source.url})`;
+      }
+    }
+    return match;
+  });
+
+  return modifiedMarkdown;
+}
 
 export default function Home() {
+  const baseResults = [{placeholder: true}, {placeholder: true}, {placeholder: true}, {placeholder: true}]
+  const [pageState, setPageState] = React.useState('landing')
+  const [pageTitle, setPageTitle] = React.useState('')
+  const [sources, setSources] = React.useState(baseResults)
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [transport, setTransport] = React.useState("N/A");
+  const [answer, setAnswer] = React.useState('')
+
+
+  React.useEffect(() => {
+    if (socket.connected) {
+      onConnect();
+    }
+
+    function onConnect() {
+      setIsConnected(true);
+      setTransport(socket.io.engine.transport.name);
+
+      socket.io.engine.on("upgrade", (transport) => {
+        setTransport(transport.name);
+      });
+    }
+
+    function onDisconnect() {
+      setIsConnected(false);
+      setTransport("N/A");
+    }
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on('init', (val: string) => {console.log(val)})
+    socket.on('results', (val: string) => {
+      const resJSON = JSON.parse(val)
+      setSources(resJSON)
+    })
+    socket.on('answer', (val: string) => {
+      setAnswer(val)
+    })
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
+  }, []);
+
+  const handleSearch = async (e: any, queryString: string) => {
+    e.preventDefault()
+
+    if(queryString == '') {
+      return
+    } else {
+      setSources(baseResults)
+      setPageTitle(queryString)
+      setPageState('results')
+      setAnswer('')
+      socket.emit('search', JSON.stringify({'query': queryString}))
+    }
+    
+
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
+
+      {pageState == 'landing' ? 
+      <div>
+        <div className="mx-auto text-3xl mt-10 w-fit">Need answers? Ask a question</div>
+
+        <div className="w-full mt-10">
+          <SearchBar isPill={false} handleSearch={handleSearch}/>
+        </div> 
+      </div>
+      
+      :
+
+      <div className="max-w-[50rem] w-full mx-auto">
+        <div className="mx-auto text-3xl mt-10">{pageTitle}</div>
+
+        <div className="flex mt-8 text-lg">
+          <div className="my-auto mr-2"><NumberedListLeft width={'1.3rem'} height={'1.3rem'}/></div>
+          Sources
         </div>
-      </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        <div className="mt-2">
+          <Sources sources={sources}/>
+        </div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+        <div className="flex mt-8 text-lg">
+          <div className="my-auto mr-2 w-[1.4rem] h-[1.4rem]"><Heptagon/></div>
+          Answer
+        </div>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+        <div className="mt-1 whitespace-pre-wrap mb-32"><ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+                            components={{
+                                // Use Tailwind CSS classes to style the HTML elements
+                                h1: ({ node, ...props }) => <h1 className="text-xl font-bold my-4 text-zinc-50" {...props} />,
+                                h2: ({ node, ...props }) => <h2 className="text-xl font-medium my-3 text-zinc-50" {...props} />,
+                                h3: ({ node, ...props }) => <h3 className="text-xl my-2 text-zinc-50" {...props} />,
+                                h4: ({ node, ...props }) => <h4 className="text-lg font-medium my-1 text-zinc-50" {...props} />,
+                                h5: ({ node, ...props }) => <h5 className="text-sm font-medium text-zinc-50" {...props} />,
+                                h6: ({ node, ...props }) => <h6 className="text-xs font-medium  text-zinc-50" {...props} />,
+                                p: ({ node, ...props }) => <p className="text-base my-2 text-white font-light" {...props} />,
+
+                                a: ({ node, ...props }) =>
+                                    <a target='_blank' className="text-zinc-50 font-mono hover:text-zinc-100 underline" {...props} />,
+
+
+                                ul: ({ node, ...props }) => <ul className="list-disc pl-6 text-white font-light" {...props} />,
+                                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 text-white font-light" {...props} />,
+                                li: ({ node, ...props }) => <li className="pl-1 py-0.5 font-light" {...props} />,
+                                blockquote: ({ node, ...props }) => <blockquote className="border-l-4 pl-4 italic my-4 bg-zinc-800 text-zinc-100" {...props} />,
+                                code: ({ node, ...props }) => <code className="py-1 rounded text-sm font-mono bg-zinc-800 text-zinc-100" {...props} />,
+                                pre: ({ node, ...props }) => <pre className="py-2 px-4 rounded text-sm bg-zinc-800 text-zinc-100 overflow-x-auto" {...props} />,
+                            }} >
+          
+          {addCitationLinks(answer, sources)}
+          
+          </ReactMarkdown></div>
+
+
+        <SearchBar isPill={true} handleSearch={handleSearch}/>
+
+        </div>
+        
+        }
+
+
+    </div>
   );
 }
