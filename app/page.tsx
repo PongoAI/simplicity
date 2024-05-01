@@ -13,6 +13,27 @@ import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
+function formatStrings(strings: any) {
+  return strings
+    .map(str => {
+      // Extract the substring inside the quotes (if applicable)
+      const match = str.match(/"(.*?)"/);
+      return match ? match[1] : '';
+    })
+    .join('')
+    .replace(/\\n/g, '\n')
+    .replace(/\\t/g, '\t')
+    .replace(/\\ /g, '\ ')
+    .replace(/\\b/g, '\b')
+    .replace(/\\f/g, '\f')
+    .replace(/\\r/g, '\r')
+    .replace(/\\'/g, '\'')
+    .replace(/\\"/g, '\"')
+    .replace(/\\v/g, '\v')
+    //unescape all escape chars 
+
+}
+
 function addCitationLinks(markdownString: string, sources: any) {
   // Regular expression to match citation pattern [i] where i is a number 1-8
   const citationRegex = /\[(\d)\]/g;
@@ -69,8 +90,7 @@ export default function Home() {
 
 
     setSources(retrievalResults['sources'])
-    console.log(retrievalResults['llmPrompt'])
-    console.log("ASKING THE LLM")
+
     const llmResponse = await fetch(`/api/llm-inference`, {
       method: 'POST', 
       headers: {
@@ -81,6 +101,8 @@ export default function Home() {
 
     const reader = llmResponse.body.getReader();
     let chunks = '';
+
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
@@ -89,18 +111,15 @@ export default function Home() {
       
       const decodedArr = new TextDecoder("utf-8").decode(value);
       const cleanedArr1 = decodedArr.match(/"([\s\S]*?)"/g)
-
-      for (var cleaned of cleanedArr1) {
-        chunks += cleaned.slice(1, -1).replace(/\\n/g, '\n');
-        console.log(cleaned.slice(1, -1).replace(/\\n/g, '\n'));
-      }
+      console.log(cleanedArr1)
+      chunks += formatStrings(cleanedArr1)
+      setAnswer(chunks)
 
 
 
 
-      setAnswer(chunks);
+      ;
     }
-
 
 
 
