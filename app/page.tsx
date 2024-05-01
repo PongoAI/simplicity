@@ -98,7 +98,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
-                <div className="static ml-auto mt-3">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo</a></div>
+      <div className="flex mt-3"><div className="static  mt-auto mb-3 text-sm "><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
+
+<div className="static ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo</a></div></div>
+        
 
       {pageState == 'landing' ? 
       <div className="flex flex-col h-screen">
@@ -108,7 +111,6 @@ export default function Home() {
         <div className="w-full mt-10">
           <SearchBar isPill={false} handleSearch={handleSearch}/>
         </div> 
-        <div className="static  mt-auto mb-3"><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
       </div>
       
       :
