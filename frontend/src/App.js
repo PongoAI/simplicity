@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 
-const SOCKET_URL = 'wss://simplicity-env.eba-rtpyyb5r.us-west-2.elasticbeanstalk.com/sockets/test'
+const SOCKET_URL = 'wss://smpl-backend.joinpongo.com/sockets/test'
 
 function addCitationLinks(markdownString, sources) {
 

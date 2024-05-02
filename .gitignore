@@ -5,6 +5,7 @@ venv/
 scripts/run_gpt_funcs.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
+node_modules/
 /ignore
 *.py[cod]
 *$py.class
