@@ -6,13 +6,13 @@ import SearchBar from "./components/searchBar";
 import Sources from "./components/sources";
 import {NumberedListLeft} from 'iconoir-react'
 import { Heptagon } from "./components/heptagon";
-import io from 'socket.io-client';
-import { socket } from "./socket";
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 function addCitationLinks(markdownString: string, sources: any) {
+
+
   // Regular expression to match citation pattern [i] where i is a number 1-8
   const citationRegex = /\[(\d)\]/g;
 
@@ -39,45 +39,40 @@ export default function Home() {
   const [pageState, setPageState] = React.useState('landing')
   const [pageTitle, setPageTitle] = React.useState('')
   const [sources, setSources] = React.useState(baseResults)
-  const [isConnected, setIsConnected] = React.useState(false);
-  const [transport, setTransport] = React.useState("N/A");
+  const [socket, setSocket] = React.useState<WebSocket | null>(null)
+
   const [answer, setAnswer] = React.useState('')
 
+  const [socketReady, setSocketReact] = React.useState(false)
+  const [SocketHasClosed, setSocketHasClosed] = React.useState(false)
+
+const checkSocketsReady = (inputSocket: any) => {
+        if (inputSocket.readyState === WebSocket.OPEN) {
+          setSocketReact(true);
+        }
+    };
 
   React.useEffect(() => {
-    if (socket.connected) {
-      onConnect();
-    }
+      const newSocket = new WebSocket(`ws://localhost:8000/sockets/test`);
 
-    function onConnect() {
-      setIsConnected(true);
-      setTransport(socket.io.engine.transport.name);
+      newSocket.onopen = () => checkSocketsReady(newSocket);
 
-      socket.io.engine.on("upgrade", (transport) => {
-        setTransport(transport.name);
-      });
-    }
 
-    function onDisconnect() {
-      setIsConnected(false);
-      setTransport("N/A");
-    }
+      newSocket.onmessage = (event) => {
+          if (event.data.startsWith("JSON_STRING:")) {
+              const data = JSON.parse(event.data.substring("JSON_STRING:".length));
+              setSources(data);
+          } else {
+              setAnswer((prev) => prev + event.data);
+          }
+      };
+      const handleClose = () => {
+        setSocketHasClosed(true)
+      };
+  
+      newSocket.onclose = handleClose;
+      setSocket(newSocket);
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on('init', (val: string) => {console.log(val)})
-    socket.on('results', (val: string) => {
-      const resJSON = JSON.parse(val)
-      setSources(resJSON)
-    })
-    socket.on('answer', (val: string) => {
-      setAnswer(val)
-    })
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-    };
   }, []);
 
   const handleSearch = async (e: any, queryString: string) => {
@@ -90,7 +85,12 @@ export default function Home() {
       setPageTitle(queryString)
       setPageState('results')
       setAnswer('')
-      socket.emit('search', JSON.stringify({'query': queryString}))
+
+      if(socket) {
+        socket.send(JSON.stringify({'query': queryString}))
+      } else {
+        alert('connection to server lost, please refresh page')
+      }
     }
     
 
