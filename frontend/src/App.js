@@ -103,8 +103,8 @@ const checkSocketsReady = (inputSocket) => {
 
   return (
     <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5 text-white">
-      <div className="flex pt-3">
-        <div className="mt-auto text-sm "><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
+      <div className="flex pt-5 md:pt-3">
+        <div className="mt-auto text-sm"><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
         <div className="ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo 🦧</a></div>
       </div>
         
