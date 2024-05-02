@@ -6,6 +6,7 @@ import SearchBar from "./components/searchBar";
 import Sources from "./components/sources";
 import {NumberedListLeft} from 'iconoir-react'
 import { Heptagon } from "./components/heptagon";
+import { RedWarningTrianlge } from './components/warningTriangles'
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -17,14 +18,13 @@ function addCitationLinks(markdownString: string, sources: any) {
   const citationRegex = /\[(\d)\]/g;
 
   // Replace each match with a hyperlinked citation
-  console.log(markdownString)
+
   const modifiedMarkdown = markdownString.replace(citationRegex, (match, index) => {
     const sourceIndex = parseInt(index) - 1;
-    console.log(sourceIndex)
+
     if (sourceIndex >= 0 && sourceIndex < sources.length) {
       const source = sources[sourceIndex];
       if (source && source.url) {
-        console.log('replaced')
         return `[${match}](${source.url})`;
       }
     }
@@ -43,12 +43,12 @@ export default function Home() {
 
   const [answer, setAnswer] = React.useState('')
 
-  const [socketReady, setSocketReact] = React.useState(false)
+  const [socketReady, setSocketReady] = React.useState(false)
   const [SocketHasClosed, setSocketHasClosed] = React.useState(false)
 
 const checkSocketsReady = (inputSocket: any) => {
         if (inputSocket.readyState === WebSocket.OPEN) {
-          setSocketReact(true);
+          setSocketReady(true);
         }
     };
 
@@ -71,12 +71,18 @@ const checkSocketsReady = (inputSocket: any) => {
       };
   
       newSocket.onclose = handleClose;
+      
       setSocket(newSocket);
 
   }, []);
 
   const handleSearch = async (e: any, queryString: string) => {
     e.preventDefault()
+    if (!socket || socket.readyState === WebSocket.CLOSING || socket.readyState === WebSocket.CLOSED) {
+      console.log('que')
+      setSocketHasClosed(true)
+      return
+    }
 
     if(queryString == '') {
       return
@@ -109,7 +115,7 @@ const checkSocketsReady = (inputSocket: any) => {
         <div className="mx-auto text-3xl mt-32 md:mt-20 w-fit">Need answers? Ask a question</div>
 
         <div className="w-full mt-10">
-          <SearchBar isPill={false} handleSearch={handleSearch}/>
+          <SearchBar isPill={false} handleSearch={handleSearch} shouldWarn={SocketHasClosed} shouldBlur={SocketHasClosed || !socketReady}/>
         </div> 
       </div>
       
@@ -134,7 +140,7 @@ const checkSocketsReady = (inputSocket: any) => {
           Answer
         </div>
 
-        <div className="mt-1 whitespace-pre-wrap mb-32"><ReactMarkdown
+        <div className="mt-1 whitespace-pre-wrap mb-40"><ReactMarkdown
                             remarkPlugins={[remarkGfm]}
 
                             components={{
@@ -164,7 +170,7 @@ const checkSocketsReady = (inputSocket: any) => {
           </ReactMarkdown></div>
 
 
-        <SearchBar isPill={true} handleSearch={handleSearch}/>
+          <SearchBar isPill={true} handleSearch={handleSearch} shouldWarn={SocketHasClosed} shouldBlur={SocketHasClosed || !socketReady}/>
 
         </div>
         
