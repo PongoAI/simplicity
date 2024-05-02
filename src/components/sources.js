@@ -1,9 +1,9 @@
 'use client'
 import React from 'react';
-import { ArrowRight} from 'iconoir-react';
 
 
-function extractDomain(url: string) {
+
+function extractDomain(url) {
     // Remove the protocol (http://, https://)
     url = url.replace(/(https?:\/\/)/, '');
     
@@ -23,7 +23,7 @@ function extractDomain(url: string) {
     return url;
   }
 
-export default function Sources({sources}: {sources: any}) {
+export default function Sources({sources}) {
 
 
 
@@ -33,7 +33,7 @@ export default function Sources({sources}: {sources: any}) {
 
 
       <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-0'>
-        {sources.map((obj: any, i: any) => {
+        {sources.map((obj, i) => {
             if(i > 3) return <></>
             else if  (obj['placeholder']){
                 return <div key={i} className='w-40 h-20 bg-zinc-800 rounded text-sm p-1'>
@@ -41,7 +41,7 @@ export default function Sources({sources}: {sources: any}) {
                     
                 </div>
             } else {
-                return <a key={i} href={obj['url']} target='_blank'><div className='w-40 h-20 bg-zinc-800 rounded text-sm p-1 '>
+                return <a key={i} href={obj['url']} target='_blank' rel="noreferrer"><div className='w-40 h-20 bg-zinc-800 rounded text-sm p-1 '>
                     <div className='overflow-hidden overflow-ellipsis line-clamp-2'>
                         {obj['metadata']['title']}
                     </div>

@@ -1,17 +1,16 @@
-'use client'
-
-import Image from "next/image";
 import React from 'react';
 import SearchBar from "./components/searchBar";
 import Sources from "./components/sources";
 import {NumberedListLeft} from 'iconoir-react'
 import { Heptagon } from "./components/heptagon";
-import { RedWarningTrianlge } from './components/warningTriangles'
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-function addCitationLinks(markdownString: string, sources: any) {
+
+const SOCKET_URL = 'wss://simplicity-env.eba-rtpyyb5r.us-west-2.elasticbeanstalk.com/sockets/test'
+
+function addCitationLinks(markdownString, sources) {
 
 
   // Regular expression to match citation pattern [i] where i is a number 1-8
@@ -34,26 +33,26 @@ function addCitationLinks(markdownString: string, sources: any) {
   return modifiedMarkdown;
 }
 
-export default function Home() {
+export default function App() {
   const baseResults = [{placeholder: true}, {placeholder: true}, {placeholder: true}, {placeholder: true}]
   const [pageState, setPageState] = React.useState('landing')
   const [pageTitle, setPageTitle] = React.useState('')
   const [sources, setSources] = React.useState(baseResults)
-  const [socket, setSocket] = React.useState<WebSocket | null>(null)
+  const [socket, setSocket] = React.useState(null)
 
   const [answer, setAnswer] = React.useState('')
 
   const [socketReady, setSocketReady] = React.useState(false)
   const [SocketHasClosed, setSocketHasClosed] = React.useState(false)
 
-const checkSocketsReady = (inputSocket: any) => {
+const checkSocketsReady = (inputSocket) => {
         if (inputSocket.readyState === WebSocket.OPEN) {
           setSocketReady(true);
         }
     };
 
   React.useEffect(() => {
-      const newSocket = new WebSocket(`ws://localhost:8000/sockets/test`);
+      const newSocket = new WebSocket(SOCKET_URL);
 
       newSocket.onopen = () => checkSocketsReady(newSocket);
 
@@ -74,9 +73,9 @@ const checkSocketsReady = (inputSocket: any) => {
       
       setSocket(newSocket);
 
-  }, []);
+  }, [setSocket]);
 
-  const handleSearch = async (e: any, queryString: string) => {
+  const handleSearch = async (e, queryString) => {
     e.preventDefault()
     if (!socket || socket.readyState === WebSocket.CLOSING || socket.readyState === WebSocket.CLOSED) {
       console.log('que')
@@ -84,7 +83,7 @@ const checkSocketsReady = (inputSocket: any) => {
       return
     }
 
-    if(queryString == '') {
+    if(queryString === '') {
       return
     } else {
       setSources(baseResults)
@@ -103,14 +102,15 @@ const checkSocketsReady = (inputSocket: any) => {
   }
 
   return (
-    <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5">
-      <div className="flex mt-3"><div className="static  mt-auto mb-3 text-sm "><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
-
-<div className="static ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo</a></div></div>
+    <div className="min-h-screen h-fit w-screen bg-zinc-900 flex flex-col px-5 text-white">
+      <div className="flex pt-3">
+        <div className="mt-auto text-sm "><a href='https://github.com/PongoAI/simplicity' className="underline">View source code</a></div>
+        <div className="ml-auto ">An experiment by <a href='https://joinpongo.com?utm_source=simplicity' className="underline">Pongo 🦧</a></div>
+      </div>
         
 
-      {pageState == 'landing' ? 
-      <div className="flex flex-col h-screen">
+      {pageState === 'landing' ? 
+      <div className="flex flex-col h-fit">
 
         <div className="mx-auto text-3xl mt-32 md:mt-20 w-fit">Need answers? Ask a question</div>
 

@@ -4,7 +4,7 @@ import { ArrowRight} from 'iconoir-react';
 import { RedWarningTrianlge } from './warningTriangles';
 
 
-export default function SearchBar({isPill=false, handleSearch, shouldWarn=false, shouldBlur=false}: {isPill: boolean, handleSearch: any, shouldWarn: boolean, shouldBlur: boolean}) {
+export default function SearchBar({isPill=false, handleSearch, shouldWarn=false, shouldBlur=false}) {
 
   const [queryString, setQueryString] = React.useState('')
 
@@ -22,8 +22,8 @@ export default function SearchBar({isPill=false, handleSearch, shouldWarn=false,
                     </div>
         </div>}
       
-      <form className={'border-2 border-zinc-500 h-12   bg-zinc-700 mx-auto flex flex-row py-1 ' + (isPill ? ' w-[96vw] rounded-full fixed bottom-10 left-1/2 transform -translate-x-1/2' : 'rounded-md w-full')}
-      onSubmit={(e)=> {shouldBlur ? () => {} : handleSearch(e, queryString)}}>
+      <form className={'border-2 border-zinc-500 h-12  max-w-[51rem] bg-zinc-700 mx-auto flex flex-row py-1 ' + (isPill ? ' w-[96vw] rounded-full fixed bottom-10 left-1/2 transform -translate-x-1/2' : 'rounded-md w-full')}
+      onSubmit={(e)=> {if(!shouldBlur){ handleSearch(e, queryString)}}}>
 
         <input className={'bg-zinc-700 h-full w-full focus:outline-none ml-3 ' + (isPill ? 'rounded-full' : 'rounded-md')} 
         placeholder='Ask anything...'
