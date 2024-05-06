@@ -13,13 +13,11 @@ from openai import OpenAI
 
 socket_router = APIRouter()
 load_dotenv()
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
-
-
 
 exa_client = Exa( os.environ.get("EXA_API_KEY"))
 
-openai_client = OpenAI(api_key=os.environ.get("TOGETHER_API_KEY"), base_url='https://api.together.xyz/v1')
+together_client = OpenAI(api_key=os.environ.get("TOGETHER_API_KEY"), base_url='https://api.together.xyz/v1')
+groq_client = OpenAI(api_key=os.environ.get("GROQ_API_KEY"), base_url='https://api.groq.com/openai/v1')
 pongo_client = pongo.PongoClient(os.environ.get("PONGO_API_KEY"))
 
 
@@ -39,7 +37,9 @@ async def websocket_endpoint(websocket: WebSocket):
             use_autoprompt=True,
             num_results=20,
             text={  "include_html_tags": False,'max_characters': 2000 },
-            highlights={ 'highlights_per_url': 10, 'num_sentences': 10})
+            highlights={ 'highlights_per_url': 10, 'num_sentences': 10},
+            type='magic'
+            )
 
         data_for_pongo = []
 
@@ -93,14 +93,33 @@ async def websocket_endpoint(websocket: WebSocket):
 
         Sources: {sources_string}'''
 
-        for chunk in openai_client.chat.completions.create(
+        groq_completion = groq_client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[{"role": "user", "content": llm_prompt}],
+            stream=True,
+            temperature=0.2,
+        )
+
+        if int(groq_completion.response.headers.get('x-ratelimit-remaining-tokens', 0)) > 500 and groq_completion.response.status_code != 429:
+            completion_to_use = groq_completion
+            
+        
+        else: #prefer groq, but fallback to together
+            completion_to_use = together_client.chat.completions.create(
             model="META-LLAMA/LLAMA-3-70B-CHAT-HF",
             messages=[{"role": "user", "content": llm_prompt}],
             stream=True,
             temperature=0.2,
-        ):
+        )
+
+
+        for chunk in completion_to_use:
             if isinstance(chunk.choices[0].delta.content, str):
                 await websocket.send_text(chunk.choices[0].delta.content)
+
+        
+
+        
         
         
 
