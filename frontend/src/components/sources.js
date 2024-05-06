@@ -34,7 +34,7 @@ export default function Sources({sources}) {
 
       <div className='grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-0'>
         {sources.map((obj, i) => {
-            if(i > 3) return <></>
+            if(i > 3) return <React.Fragment key={i}></React.Fragment>
             else if  (obj['placeholder']){
                 return <div key={i} className='w-40 h-20 bg-zinc-800 rounded text-sm p-1'>
                     
